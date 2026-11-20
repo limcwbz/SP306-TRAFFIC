@@ -1,0 +1,21 @@
+{
+  "_설명": "ARTESP 공개 SAT 일별 계수에서 집계할 도로와 km 범위. kmMin/kmMax 가 null 이면 해당 도로의 모든 계측점을 집계합니다. 우리 구간이 도로의 몇 km 인지 확인되면 범위를 좁히세요 (예: SP308 kmMin 130, kmMax 150). 계측점 km 는 SAT 자료의 KM+COMPLEMENTO(m) 값입니다. outlierFactor: 같은 지점·방향 중앙값의 몇 배 넘으면 이상치로 볼지. motoShareSuspect/motoMinTotal: 하루 합계가 motoMinTotal 대를 넘는데 오토바이 비율이 motoShareSuspect 이상이면 센서 오기록으로 제외.",
+  "years": [
+    2026
+  ],
+  "outlierFactor": 5,
+  "roads": {
+    "SP308": {
+      "name": "SP-308 Rodovia do Açúcar",
+      "kmMin": null,
+      "kmMax": null
+    },
+    "SP330": {
+      "name": "SP-330 Anhanguera",
+      "kmMin": null,
+      "kmMax": null
+    }
+  },
+  "motoShareSuspect": 0.7,
+  "motoMinTotal": 20000
+}

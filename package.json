@@ -1,0 +1,12 @@
+{
+  "name": "sp306-traffic",
+  "version": "1.0.0",
+  "private": true,
+  "description": "SP-306 구간별 교통상황 15분 수집 및 일일 보고 (GitHub Actions)",
+  "license": "UNLICENSED",
+  "dependencies": {
+    "@resvg/resvg-js": "^2.6.2",
+    "exceljs": "^4.4.0",
+    "nodemailer": "^6.9.16"
+  }
+}
