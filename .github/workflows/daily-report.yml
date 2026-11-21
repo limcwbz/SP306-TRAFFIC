@@ -1,0 +1,91 @@
+name: daily-report
+
+# 매일 한국 08:00(= UTC 23:00)에 직전 브라질 하루(00:00~23:59)의 엑셀 + 그래프 메일을 보낸다.
+# 07:40 KST(= UTC 22:40)에 시작해 08:00 까지 기다린다 — GitHub 스케줄이 늦게 시작돼도 늦어지는 폭을 줄이기 위함.
+on:
+  schedule:
+    - cron: '40 22 * * *'
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: '시험 실행: 메일을 보내지 않고 엑셀·메일 파일만 만들어 결과물(artifact)로 올림'
+        type: boolean
+        default: true
+      mail_to:
+        description: '시험 수신자 (비우면 Secrets 의 MAIL_TO). 시험 시 본인 주소로 먼저 확인하세요'
+        required: false
+
+permissions:
+  contents: write
+
+concurrency:
+  group: sp306-data
+  cancel-in-progress: false
+
+jobs:
+  report:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+
+      # data 브랜치가 아직 없으면 seed/ 내용으로 자동 생성 (처음 한 번만 동작)
+      - name: Ensure data branch
+        run: bash scripts/ensure_data_branch.sh
+        env:
+          REMOTE_URL: https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git
+
+      - uses: actions/checkout@v4
+        with:
+          ref: data
+          path: store
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci --no-audit --no-fund
+
+      # 그래프의 한글이 깨지지 않도록 한글 폰트 설치
+      - name: Install Korean font
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq fonts-noto-cjk
+          fc-list | grep -i -c "Noto Sans CJK" || true
+
+      - name: Report
+        run: node report_run.js
+        env:
+          SP306_HOME: ${{ github.workspace }}/store
+          SP306_DRYRUN: ${{ (github.event_name == 'workflow_dispatch' && inputs.dry_run) && '1' || '' }}
+          # 밑줄 있는 이름(MAIL_TO 등)과 없는 이름(MAILTO 등) 둘 다 허용
+          MAIL_TO: ${{ inputs.mail_to != '' && inputs.mail_to || secrets.MAIL_TO || secrets.MAILTO }}
+          SMTP_USER: ${{ secrets.SMTP_USER || secrets.SMTPUSER }}
+          SMTP_PASS: ${{ secrets.SMTP_PASS || secrets.SMTPPASS }}
+          # 수동 시험일 때는 발송 시각을 기다리지 않는다
+          SP306_NOWAIT: ${{ github.event_name == 'workflow_dispatch' && '1' || '' }}
+
+      - name: Upload result files
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: report-output
+          path: store/out
+          retention-days: 7
+          if-no-files-found: ignore
+
+      - name: Commit state
+        if: always()
+        working-directory: store
+        run: |
+          git config user.name  "sp306-bot"
+          git config user.email "sp306-bot@users.noreply.github.com"
+          git add -A state.json 2>/dev/null || true
+          git diff --cached --quiet && { echo "변경 없음"; exit 0; }
+          git commit -m "report state $(date -u +%FT%TZ)"
+          for i in 1 2 3 4; do
+            git pull --rebase origin data && git push origin data && exit 0
+            sleep $((i * 4))
+          done
+          echo "push 실패"; exit 1
