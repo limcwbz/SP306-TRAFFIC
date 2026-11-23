@@ -27,7 +27,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 40
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       # data 브랜치가 아직 없으면 seed/ 내용으로 자동 생성 (처음 한 번만 동작)
       - name: Ensure data branch
@@ -35,12 +35,12 @@ jobs:
         env:
           REMOTE_URL: https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git
 
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           ref: data
           path: store
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v5
         with:
           node-version: 22
           cache: npm
@@ -68,7 +68,7 @@ jobs:
 
       - name: Upload result files
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: report-output
           path: store/out
