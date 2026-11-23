@@ -1,21 +1,30 @@
 {
-  "_설명": "ARTESP 공개 SAT 일별 계수에서 집계할 도로와 km 범위. kmMin/kmMax 가 null 이면 해당 도로의 모든 계측점을 집계합니다. 우리 구간이 도로의 몇 km 인지 확인되면 범위를 좁히세요 (예: SP308 kmMin 130, kmMax 150). 계측점 km 는 SAT 자료의 KM+COMPLEMENTO(m) 값입니다. outlierFactor: 같은 지점·방향 중앙값의 몇 배 넘으면 이상치로 볼지. motoShareSuspect/motoMinTotal: 하루 합계가 motoMinTotal 대를 넘는데 오토바이 비율이 motoShareSuspect 이상이면 센서 오기록으로 제외.",
-  "years": [
-    2026
-  ],
+  "_설명": "ARTESP 공개 SAT 일별 계수 집계 설정. ourKm 은 우리 TomTom 속도 집계 구간이 도로의 몇 km 인지(사고 기록의 km·좌표로 추정한 값, 오차 가능)이며, 이 범위 안의 계측점은 엑셀·메일·HTML 에서 파란색으로 표시됩니다. segKm 은 우리 구간 1,2,3.. 번이 차지하는 km 범위(진행방향 순서). marginKm 는 구간 밖이라도 참고로 보여줄 거리입니다. years 가 auto 이면 올해(1월에는 작년 포함) 자료를 씁니다. outlierFactor: 같은 지점·방향 중앙값의 몇 배 넘으면 이상치. motoShareSuspect/motoMinTotal: 하루 합계가 motoMinTotal 대를 넘는데 오토바이 비율이 motoShareSuspect 이상이면 센서 오기록으로 제외.",
+  "years": "auto",
   "outlierFactor": 5,
+  "motoShareSuspect": 0.7,
+  "motoMinTotal": 20000,
+  "marginKm": 5,
+  "order": ["SP306", "SP330", "SP308"],
   "roads": {
-    "SP308": {
-      "name": "SP-308 Rodovia do Açúcar",
-      "kmMin": null,
-      "kmMax": null
+    "SP306": {
+      "display": "SP-306",
+      "noData": true,
+      "note": "ARTESP 공개 통행량(SAT) 자료에 SP-306 계측점이 없습니다. 통행량은 관할 기관에 별도 요청이 필요합니다."
     },
     "SP330": {
-      "name": "SP-330 Anhanguera",
-      "kmMin": null,
-      "kmMax": null
+      "display": "SP-330 (Anhanguera)",
+      "ourKm": [131.8, 135.9],
+      "segKm": [[135.9, 133.9], [133.9, 131.8]],
+      "dirLabels": { "SUL": "남행", "NORTE": "북행" },
+      "basis": "SP-133 교차점에서 남쪽 4 km. 사고 기록(km·좌표)으로 추정한 도로 km 131.8~135.9 (km 는 남쪽으로 갈수록 감소)"
+    },
+    "SP308": {
+      "display": "SP-308 (Rodovia do Açúcar)",
+      "ourKm": [117.1, 123.5],
+      "segKm": [[123.5, 121.8], [121.8, 120.1], [120.1, 118.3], [118.3, 117.1]],
+      "dirLabels": { "SUL": "남동행(추정)", "NORTE": "북서행(추정)" },
+      "basis": "지정 시작~끝 약 7.4 km. 사고 기록으로 추정한 도로 km 117.1~123.5 (km 는 남동쪽으로 갈수록 감소). 방향 NORTE/SUL 과 남동행/북서행의 대응은 km 증감 방향으로 추정한 것"
     }
-  },
-  "motoShareSuspect": 0.7,
-  "motoMinTotal": 20000
+  }
 }

@@ -67,11 +67,26 @@ function addDirSheet(wb, win, label, g, dir, charts) {
   if (charts) putChart(wb, ws, charts[`${g.key}:${dir.key}`], lr + 3); // 0-기준 행 번호 = 엑셀 (lr+4)행
 }
 
-async function buildExcel(win, label, outFile, charts) {
+async function buildExcel(win, label, outFile, charts, vol, dash) {
   const wb = new ExcelJS.Workbook();
   wb.creator = 'SP-306 monitor'; wb.created = new Date();
   const slots = win;
 
+  if (dash) {
+    // 맨 앞 시트: HTML 화면처럼 도로 도식도 → 구간 카드 → 시간대별 평균 속도 표를 도로별 한 장씩 위에서 아래로
+    const wd0 = wb.addWorksheet('요약장표', { views: [{ showGridLines: false }] });
+    wd0.getColumn(1).width = 2;
+    wd0.mergeCells('B1:T1'); wd0.getCell('B1').value = `SP-306 · SP-330 · SP-308 일일 요약장표 · ${label} · ${TZ_NOTE}`; wd0.getCell('B1').font = { bold: true, size: 14 };
+    wd0.mergeCells('B2:T2'); wd0.getCell('B2').value = '아래 그림은 HTML 화면과 같은 구성(도로 그림 → 구간별 요약 → 시간대별 평균 속도)입니다. 값은 그날 수집된 15분 슬롯의 평균·최저이며, 회색 칸은 수집된 값이 없는 시간입니다.';
+    wd0.getCell('B2').font = { size: 10, color: { argb: 'FF667078' } };
+    let rowPx = 40; const ROW = 20; // 기본 행 높이 20px 가정 (아래 putAt 에서 행 번호로 환산)
+    for (const key of Object.keys(dash)) {
+      const d = dash[key], id = wb.addImage({ buffer: d.png, extension: 'png' });
+      const scale = 1280 / d.w, wpx = Math.round(d.w * scale), hpx = Math.round(d.h * scale);
+      wd0.addImage(id, { tl: { col: 1, row: Math.ceil(rowPx / ROW) }, ext: { width: wpx, height: hpx } });
+      rowPx += hpx + 30;
+    }
+  }
   for (const g of GROUPS) for (const dir of g.dirs) addDirSheet(wb, win, label, g, dir, charts);
 
   /* 상세 (세로) */
@@ -122,6 +137,8 @@ async function buildExcel(win, label, outFile, charts) {
   // 요약 시트 맨 하단: 도로 세그먼트 기준
   wsum.getCell(r + 1, 1).value = SEGMENT_NOTE.title; wsum.getCell(r + 1, 1).font = { bold: true };
   SEGMENT_NOTE.lines.forEach((ln, k) => { wsum.getCell(r + 2 + k, 1).value = ln; });
+
+  if (vol) require('./volume_core').addVolumeSheet(wb, vol, '일일 통행량(ARTESP)');
 
   await wb.xlsx.writeFile(outFile);
   return { file: outFile, slotCount: slots.filter(e => e.rec).length, total: slots.length, summary };

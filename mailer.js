@@ -7,9 +7,11 @@ const fs = require('fs');
 const path = require('path');
 const nodemailer = require('nodemailer');
 
-async function sendReport({ to, subject, text, html, attachPath, inline, outDir }) {
+async function sendReport({ to, subject, text, html, attachPath, extraAttach, inline, outDir }) {
   const user = process.env.SMTP_USER, pass = process.env.SMTP_PASS;
+  // 첨부: 엑셀(attachPath) + 추가 첨부(extraAttach, 예: 독립형 HTML 보고서) + 본문 그림(inline, cid)
   const attachments = [{ filename: path.basename(attachPath), path: attachPath }]
+    .concat((extraAttach || []).map(f => ({ filename: path.basename(f), path: f, contentType: /\.html?$/i.test(f) ? 'text/html; charset=utf-8' : undefined })))
     .concat((inline || []).map(i => ({ filename: path.basename(i.path), path: i.path, cid: i.cid })));
   const message = { from: user ? `"SP-306 교통상황" <${user}>` : 'sp306@example.invalid', to, subject, text, html, attachments };
 
