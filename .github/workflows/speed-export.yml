@@ -1,0 +1,53 @@
+name: speed-export
+
+# data 브랜치의 TomTom 15분 속도 로그(data/날짜.jsonl)를 엑셀로 내보낸다. 수동 실행 전용 (필요할 때 Run workflow).
+#   결과: 실행 화면 맨 아래 Artifacts → traffic-speed (엑셀, 30일 보관)
+on:
+  workflow_dispatch:
+    inputs:
+      from:
+        description: '시작일 (브라질 날짜, YYYY-MM-DD). 비우면 기록의 첫 날'
+        required: false
+      to:
+        description: '종료일 (브라질 날짜, YYYY-MM-DD). 비우면 기록의 마지막 날'
+        required: false
+
+permissions:
+  contents: read
+
+jobs:
+  export:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      # data 브랜치(수집 로그)를 store 폴더로 읽는다. 읽기 전용이라 collect·daily-report 와 서로 영향이 없다.
+      - uses: actions/checkout@v4
+        with:
+          ref: data
+          path: store
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      # 엑셀 라이브러리만 필요 (그래프용 선택 패키지는 생략)
+      - run: npm ci --omit=optional --no-audit --no-fund
+
+      - name: Export speed log to Excel
+        run: node speed_export.js
+        env:
+          SP306_HOME: ${{ github.workspace }}/store
+          EXPORT_FROM: ${{ inputs.from }}
+          EXPORT_TO: ${{ inputs.to }}
+          EXPORT_OUT: ${{ github.workspace }}/speed_out
+
+      - name: Upload Excel
+        uses: actions/upload-artifact@v4
+        with:
+          name: traffic-speed
+          path: speed_out/traffic_speed_*.xlsx
+          retention-days: 30
+          if-no-files-found: error
