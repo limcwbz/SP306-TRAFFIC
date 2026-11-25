@@ -13,7 +13,7 @@ const cfg = {
   apiKey: process.env.TOMTOM_API_KEY || '',
   recipient: process.env.MAIL_TO || '',
   startDate: process.env.SP306_START_DATE || '2026-11-17',
-  endDate: process.env.SP306_END_DATE || '2026-12-31',
+  endDate: process.env.SP306_END_DATE || '2027-12-31',
   sendTimeKST: process.env.SP306_SEND_KST || '08:00',
   aggregationLeadMinutes: Number(process.env.SP306_LEAD_MIN || 60),
 };
